@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard editing</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #F5F6F7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .wrap { display: flex; flex-direction: column; gap: 20px; align-items: center; }
+  h1 { font-size: 24px; font-weight: 500; color: #000; }
+  .links { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  a {
+    display: inline-block;
+    padding: 14px 22px;
+    background: #FFFFFF;
+    border-radius: 12px;
+    color: #000;
+    text-decoration: none;
+    font-size: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transition: transform 0.15s ease;
+  }
+  a:hover { transform: translateY(-2px); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Dashboard editing</h1>
+    <div class="links">
+      <a href="task2.html">task2.html (старая версия)</a>
+      <a href="task.html">task.html (новая версия)</a>
+    </div>
+  </div>
+</body>
+</html>

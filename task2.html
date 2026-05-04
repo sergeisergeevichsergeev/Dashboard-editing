@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Задание</title>
+<style>
+  @font-face {
+    font-family: 'YS Text';
+    src: local('YS Text'), local('YandexSansText'), local('Yandex Sans Text');
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+  }
+
+  body {
+    font-family: 'YS Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #F5F6F7;
+    position: relative;
+    min-height: 100vh;
+  }
+
+  .task-heading {
+    position: fixed;
+    top: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'YS Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 500;
+    color: #000000;
+    white-space: nowrap;
+    z-index: 100;
+  }
+
+  .action-panel {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    padding: 8px;
+    background: #FFFFFF;
+    border: 2px solid #027BFE;
+    border-radius: 10px;
+    z-index: 100;
+  }
+
+  .action-panel-item {
+    width: 108px;
+    height: 68px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    color: #000000;
+    font-family: 'YS Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 400;
+    white-space: nowrap;
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .action-panel-item:hover {
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .action-panel-item:active {
+    cursor: pointer;
+  }
+
+  .action-panel-item img {
+    width: 16px;
+    height: 16px;
+    display: block;
+  }
+
+  .drag-ghost {
+    position: fixed !important;
+    pointer-events: none;
+    z-index: 1000;
+    background: #FFFFFF !important;
+    border: none !important;
+    border-radius: 6px !important;
+    opacity: 0.9;
+    transform: none !important;
+  }
+
+  .action-panel-item.dragging-source {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  body.is-dragging {
+    cursor: pointer;
+  }
+
+  .drop-placeholder {
+    position: fixed;
+    width: 536px;
+    height: 304px;
+    background: rgba(2, 123, 254, 0.1);
+    border-radius: 16px;
+    pointer-events: none;
+    z-index: 50;
+  }
+
+  .result-tile {
+    position: fixed;
+    width: 536px;
+    height: 304px;
+    background: #FFFFFF;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 500;
+    color: #000000;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    z-index: 50;
+    text-align: center;
+    padding: 0 24px;
+  }
+</style>
+</head>
+<body>
+  <div class="task-heading">Поместите любой элемент из панели снизу на страницу</div>
+
+  <div class="action-panel">
+    <button class="action-panel-item">
+      <img src="chart.svg" alt="">
+      <span>Чарт</span>
+    </button>
+    <button class="action-panel-item">
+      <img src="selector.svg" alt="">
+      <span>Селектор</span>
+    </button>
+    <button class="action-panel-item">
+      <img src="selector-js.svg" alt="">
+      <span>Селектор (JS)</span>
+    </button>
+    <button class="action-panel-item">
+      <img src="text.svg" alt="">
+      <span>Текст</span>
+    </button>
+    <button class="action-panel-item">
+      <img src="heading.svg" alt="">
+      <span>Заголовок</span>
+    </button>
+    <button class="action-panel-item">
+      <img src="neuro.svg" alt="">
+      <span>Нейроаналитик</span>
+    </button>
+  </div>
+
+<script>
+(() => {
+  const TILE_W = 536;
+  const TILE_H = 304;
+  const DRAG_THRESHOLD = 4;
+
+  const items = document.querySelectorAll('.action-panel-item');
+  let drag = null;
+
+  function clearTiles() {
+    document.querySelectorAll('.result-tile, .drop-placeholder').forEach(el => el.remove());
+  }
+
+  function centeredPosition() {
+    const left = (window.innerWidth - TILE_W) / 2;
+    const top = (window.innerHeight - TILE_H) / 2 - 40;
+    return { left, top };
+  }
+
+  function showResultTile(message, position) {
+    clearTiles();
+    const tile = document.createElement('div');
+    tile.className = 'result-tile';
+    tile.textContent = message;
+    const pos = position || centeredPosition();
+    tile.style.left = pos.left + 'px';
+    tile.style.top = pos.top + 'px';
+    document.body.appendChild(tile);
+  }
+
+  items.forEach(item => {
+    item.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      const rect = item.getBoundingClientRect();
+      drag = {
+        item,
+        startX: e.clientX,
+        startY: e.clientY,
+        offsetX: e.clientX - rect.left,
+        offsetY: e.clientY - rect.top,
+        srcRect: rect,
+        ghost: null,
+        placeholder: null,
+        active: false,
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  });
+
+  function activate() {
+    clearTiles();
+
+    const ghost = drag.item.cloneNode(true);
+    ghost.classList.add('drag-ghost');
+    ghost.style.left = drag.srcRect.left + 'px';
+    ghost.style.top = drag.srcRect.top + 'px';
+    ghost.style.width = drag.srcRect.width + 'px';
+    ghost.style.height = drag.srcRect.height + 'px';
+    document.body.appendChild(ghost);
+
+    const placeholder = document.createElement('div');
+    placeholder.className = 'drop-placeholder';
+    document.body.appendChild(placeholder);
+
+    drag.ghost = ghost;
+    drag.placeholder = placeholder;
+    drag.item.classList.add('dragging-source');
+    drag.active = true;
+    document.body.classList.add('is-dragging');
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'pointer';
+  }
+
+  function placeholderPositionAt(x, y) {
+    const left = x - TILE_W / 2;
+    const top = y - TILE_H / 2;
+    const maxLeft = window.innerWidth - TILE_W;
+    const maxTop = window.innerHeight - TILE_H;
+    return {
+      left: Math.max(0, Math.min(maxLeft, left)),
+      top: Math.max(0, Math.min(maxTop, top)),
+    };
+  }
+
+  function onMove(e) {
+    if (!drag) return;
+
+    if (!drag.active) {
+      const dx = e.clientX - drag.startX;
+      const dy = e.clientY - drag.startY;
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      activate();
+    }
+
+    drag.ghost.style.left = (e.clientX - drag.offsetX) + 'px';
+    drag.ghost.style.top = (e.clientY - drag.offsetY) + 'px';
+
+    const pos = placeholderPositionAt(e.clientX, e.clientY);
+    drag.placeholder.style.left = pos.left + 'px';
+    drag.placeholder.style.top = pos.top + 'px';
+    drag.lastPos = pos;
+  }
+
+  function onUp() {
+    if (!drag) return;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+
+    if (drag.active) {
+      const dropPos = drag.lastPos;
+      drag.ghost.remove();
+      drag.placeholder.remove();
+      drag.item.classList.remove('dragging-source');
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      setTimeout(() => {
+        document.body.classList.remove('is-dragging');
+      }, 300);
+      showResultTile('Поздравляем, вы успешно завершили задание!', dropPos);
+    } else {
+      showResultTile('Вы завершили задание!');
+    }
+    drag = null;
+  }
+})();
+</script>
+</body>
+</html>
